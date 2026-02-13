@@ -5,7 +5,7 @@
 
 ## 🎬 Live Demo
 
-<video src="demo.mp4" controls width="900"></video>
+[▶ Click here to watch the demo](0213.mp4)
 
 ---
 

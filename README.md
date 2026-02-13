@@ -1,124 +1,96 @@
 # Auto CV Tailoring Pipeline (n8n + Notion → PDF)
 
-## 🚀 Overview
+## Overview
 
-Applying to jobs usually means editing your CV again and again for each new role.  
-This project automates that process.
+Applying to jobs often means rewriting your CV over and over again. 
+You adjust a few lines here, reword a paragraph there, tweak the summary, change the skills… and repeat the process for every new application.
 
-You paste a Job Description in Notion, and the system generates a tailored, clean PDF version of your CV — ready to send.
+I built this project to remove that friction.
 
-Everything runs locally using Docker containers, including a locally hosted LLM model.  
-No external AI APIs are required.
+The idea is simple: write the Job Description in Notion, trigger the workflow, and receive a tailored, clean PDF version of your CV. No manual formatting, no repetitive edits, no broken layouts.
 
----
-
-## 🧠 Why I Built This
-
-Tailoring a CV for every job application is:
-
-- Repetitive  
-- Time-consuming  
-- Easy to break formatting  
-- Inconsistent  
-
-I wanted a system that:
-
-- Standardizes the process  
-- Reduces manual effort  
-- Preserves formatting stability  
-- Minimizes AI hallucinations  
-- Runs fully locally for privacy and control  
-
-This pipeline transforms a manual task into a structured, automated system.
+Everything runs locally using Docker containers, including the language model. There are no external AI APIs involved. The model is downloaded and executed directly on my machine, which keeps the entire pipeline private, controllable, and cost-free.
 
 ---
 
-## 🏗 Infrastructure (Local-First Design)
+## Why This Exists
 
-The entire system runs locally inside Docker containers:
+Manually tailoring a CV is not hard — it’s just inefficient. It consumes time, introduces inconsistencies, and makes it easy to over-edit sections that should remain stable.
 
-- n8n (workflow orchestration)
-- Local LLM model (downloaded and hosted on my machine)
-- PDF rendering service
-- Supporting services if required
+What I wanted was not just automation, but controlled automation.
 
-No external LLM APIs are used.  
-The model is downloaded and executed locally, ensuring:
+This system standardizes the process. It limits what the AI is allowed to modify. It keeps the structure intact. It reduces hallucination risk by forcing structured outputs. And it ensures that formatting remains predictable and stable across every generated version.
 
-- Full data privacy  
-- No API costs  
-- Full control over model behavior  
-- Offline capability  
-
-This makes the system reproducible, private, and infrastructure-aware.
+In short: it turns a messy manual workflow into a repeatable system.
 
 ---
 
-## ⚙️ How It Works (High-Level)
+## Infrastructure and Local-First Design
 
-Notion (Job Description)
-↓  
-n8n (Docker container)
-↓  
-Local LLM Model (running on host)
-↓  
-Structured JSON validation
-↓  
-HTML Template Rendering
-↓  
-PDF Generation
-↓  
-Final CV Output  
+One of the key design decisions was to run everything locally.
 
-Each step is isolated and controlled to reduce risk and improve reliability.
+The orchestration is handled by n8n running inside a Docker container.  
+The LLM is downloaded and hosted locally.  
+PDF rendering is containerized as well.
+
+This setup ensures:
+
+- Full data privacy (CVs never leave the machine)
+- Zero API costs
+- Offline capability
+- Full control over model behavior and system architecture
+
+It also makes the system reproducible and infrastructure-aware, rather than just being a “prompt + API call” demo.
 
 ---
 
-## 🔐 Design Philosophy
+## How the System Works
+
+At a high level, the process flows like this:
+
+A Job Description is written in Notion.  
+n8n reads it and orchestrates the workflow.  
+The local LLM processes the relevant CV sections under strict constraints.  
+The output is validated as structured JSON.  
+That structured content is injected into a stable HTML template.  
+Finally, the system generates a clean, print-ready PDF.
+
+Each step is intentionally separated and controlled to minimize risk and maximize reliability.
+
+---
+
+## Design Philosophy
 
 This project is intentionally opinionated.
 
-- The LLM is restricted to editing only selected CV sections.
-- Output is forced into structured JSON before rendering.
-- Everything runs locally inside containers.
-- No credentials are stored in this repository.
-- Workflow is exported for transparency and reproducibility.
+The AI is not allowed to rewrite the entire CV. It only modifies specific sections.  
+The output must conform to a structured format before rendering.  
+Everything runs locally inside containers.  
+Credentials are never stored in the repository.  
 
-The focus is system design, reliability, and infrastructure awareness — not just AI automation.
-
----
-
-## 📌 What I Would Improve in Production
-
-If deployed at scale, I would add:
-
-- Multi-model fallback (local + cloud provider)
-- Automatic retry mechanism for malformed JSON
-- Centralized logging
-- CV template versioning
-- Monitoring and observability layer
-- A/B testing between tailored variants
+The goal is not flashy AI automation.  
+The goal is to demonstrate system design thinking applied to real-world workflow automation.
 
 ---
 
-## 📂 Repository Structure
+## If This Were Production
 
-- `/n8n/workflow.json` → Exported n8n workflow
-- `/docs` → Public project page (GitHub Pages)
-- `README.md` → Project explanation and design notes
+If this were deployed at scale, I would extend it with:
+
+Multi-model fallback logic.  
+Retry mechanisms for malformed model outputs.  
+Centralized logging and observability.  
+Version-controlled CV templates.  
+A/B testing across tailored variants.  
+
+The foundation is here. The production hardening would be the next layer.
 
 ---
 
-## 🎥 Demo
+## Final Note
 
-(Demo GIF will be added here)
+This project is part of my portfolio to demonstrate practical AI orchestration, local infrastructure design, and workflow automation.
 
----
+It’s not about generating a PDF.
 
-## 📎 Final Note
-
-This project demonstrates practical AI orchestration, local-first infrastructure design, and workflow automation.
-
-It is not just about generating a PDF.
-
-It is about building controlled, privacy-aware AI systems that solve repetitive real-world problems using containerized infrastructure.
+It’s about building controlled, privacy-aware systems that reduce repetitive cognitive work and turn manual processes into structured pipelines.

@@ -1,0 +1,327 @@
+{
+  "name": "Auto CV",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "databaseId": {
+          "__rl": true,
+          "value": "NOTION_DATABASE_ID",
+          "mode": "list",
+          "cachedResultName": "Applications Tracker\n",
+          "cachedResultUrl": "https://www.notion.so/NOTION_DATABASE_ID"
+        }
+      },
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "5300c4f0-9ad7-4682-b39d-4221b071ef78",
+      "name": "TRIGGER - New Application (Notion)"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{$json[\"CV Used\"][0]}}\n",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [192, 0],
+      "id": "09251b6c-5c1c-4b78-b210-6132d167f398",
+      "name": "NOTION - Fetch CV Master"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fullCV = $json.property_file;\n\n// 1) Title = 2nd line (after NAME)\nconst lines = fullCV.split(/\\r?\\n/);\nconst nameLine = (lines[0] ?? \"\").trim();\nconst titleLine = (lines[1] ?? \"\").trim();\n\n// 2) Summary block (between headers)\nconst summaryMatch = fullCV.match(/PROFESSIONAL SUMMARY\\s*\\r?\\n([\\s\\S]*?)\\r?\\n\\s*PROFESSIONAL EXPERIENCE/);\nconst baseSummary = summaryMatch ? summaryMatch[1].trim() : \"\";\n\n// 3) Skills block (between headers)\nconst skillsMatch = fullCV.match(/TECHNICAL\\s*&\\s*BUSINESS\\s*SKILLS\\s*\\r?\\n([\\s\\S]*?)\\r?\\n\\s*EDUCATION/);\nconst baseSkills = skillsMatch ? skillsMatch[1].trim() : \"\";\n\n// 4) Interests line/block (from INTERESTS to end or next header if any)\nconst interestsMatch = fullCV.match(/INTERESTS\\s*\\r?\\n([\\s\\S]*?)\\s*$/);\nconst baseInterests = interestsMatch ? interestsMatch[1].trim() : \"\";\n\nreturn {\n  full_cv: fullCV,\n  job_description: $node[\"TRIGGER - New Application (Notion)\"].json[\"Job Description\"],\n  base_title: titleLine,\n  base_summary: baseSummary,\n  base_skills: baseSkills,\n  base_interests: baseInterests,\n  name_line: nameLine,\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [384, 16],
+      "id": "79688793-cf34-465c-9bdc-76501e2e88ec",
+      "name": "PARSE - Extract CV Sections"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b0f0f872-81f3-4173-8ce7-e1fcf1766e56",
+              "name": "finalPrompt",
+              "value": "=You are an ATS CV optimization engine specialized in consulting and data roles.\n\nYou will receive:\n- Job Description\n- Base Title\n- Base Professional Summary\n- Base Technical & Business Skills\n- Base Interests\n\nOBJECTIVE\nStrategically align the CV to the Job Description while maintaining realism and factual accuracy.\n\nSTEP 1 — ROLE ANALYSIS (internal reasoning)\nFrom the Job Description, detect:\n- Is it consulting-oriented? (look for: consultoría, transformation, client, strategy)\n- Is it data-focused? (look for: data, analytics, governance, BI)\n- Is it cloud-focused but not architect-level? (look for: cloud adoption, reference architectures, administration)\n- Does it explicitly mention Power BI or query languages?\n\nSTEP 2 — POSITIONING DECISION\nBased on the analysis:\n- If consulting + data + cloud → Position as \"Data & Cloud Solutions Analyst\"\n- If mainly data + BI → Position as \"Data & BI Analyst\"\n- If automation-heavy → Position as \"AI & Data Automation Analyst\"\n- Never use “Architect” or “Senior” unless explicitly stated.\n\nEDITABLE SECTIONS (ONLY THESE 4)\n1) Title\n2) Professional Summary\n3) Technical & Business Skills\n4) Interests\n\nHARD CONSTRAINTS\n- Do NOT invent tools, roles, companies, dates, certifications, or metrics.\n- Do NOT add technologies not present in Base Skills.\n- Do NOT exaggerate seniority.\n- Do NOT output markdown or explanations.\n- Output ONLY valid JSON.\n\nTITLE RULES\n- Max 5 words.\n- No hyphens.\n- No parentheses.\n- Must reflect detected role positioning.\n- Must remain consistent with actual experience.\n\nSUMMARY RULES\n- Rewrite from scratch.\n- 3–4 tight lines.\n- Must include at least:\n   • data architectures or data platforms (if present in JD)\n   • cloud environments (if present in JD)\n   • Power BI or SQL (if mentioned in JD)\n   • consultative or client-facing mindset (if consulting detected)\n- Avoid generic buzzwords like \"results-driven\".\n\nSKILLS RULES\n- Must remain EXACTLY 3 lines starting with:\nBusiness:\nTechnical:\nTools & Platforms:\n- Reorder skills based on JD priority.\n- If Power BI mentioned in JD → Move Power BI to first position in Tools.\n- If query languages mentioned → Move SQL to first position in Technical.\n- If cloud mentioned → Include Cloud Services (AWS) prominently but do not imply architect-level ownership.\n- Keep all existing skills.\n\nINTERESTS RULES\n- Single line, comma-separated.\n- Include digital transformation or data governance if JD mentions them.\n- Keep concise.\n\nOUTPUT FORMAT (MANDATORY)\n{\n  \"new_title\": \"...\",\n  \"new_summary\": \"...\",\n  \"new_skills\": \"...\",\n  \"new_interests\": \"...\"\n}\n\nINPUTS\nJob Description:\n{{$json.job_description}}\n\nBase Title:\n{{$json.base_title}}\n\nBase Summary:\n{{$json.base_summary}}\n\nBase Skills:\n{{$json.base_skills}}\n\nBase Interests:\n{{$json.base_interests}}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [592, 16],
+      "id": "02d65184-c0f9-4df0-86c6-deffe6087959",
+      "name": "PROMPT - Build ATS Instruction"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json[\"finalPrompt\"]}}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [800, 16],
+      "id": "fad04808-4a3a-496d-a681-bb88ca8ad345",
+      "name": "LLM - CV Optimization Chain"
+    },
+    {
+      "parameters": {
+        "model": "gemma3:12b",
+        "options": {
+          "temperature": 0.4,
+          "topK": 40,
+          "topP": 0.9,
+          "keepAlive": "5m",
+          "penalizeNewline": true,
+          "repeatPenalty": 1.1,
+          "format": "json"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [880, 224],
+      "id": "3ebe2791-2575-4bbd-9c0b-2622403a8518",
+      "name": "LLM Model - Ollama Gemma3"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw =\n  $json.output ??\n  $json.text ??\n  $json.response ??\n  $json.completion ??\n  JSON.stringify($json);\n\n// 1) intenta parseo directo si ya es objeto\nif (typeof $json === \"object\" && $json.new_title && $json.new_summary) {\n  return { ...$json };\n}\n\n// 2) busca el primer bloque JSON {...}\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\nif (!match) {\n  return {\n    new_title: \"\",\n    new_summary: \"\",\n    new_skills: \"\",\n    new_interests: \"\"\n  };\n}\n\nlet jsonStr = match[0];\n\n// 3) limpia posibles ```json ```\njsonStr = jsonStr.replace(/```json|```/g, \"\").trim();\n\ntry {\n  const parsed = JSON.parse(jsonStr);\n\n  return {\n    new_title: parsed.new_title ?? \"\",\n    new_summary: parsed.new_summary ?? \"\",\n    new_skills: parsed.new_skills ?? \"\",\n    new_interests: parsed.new_interests ?? \"\"\n  };\n} catch (e) {\n  return {\n    new_title: \"\",\n    new_summary: \"\",\n    new_skills: \"\",\n    new_interests: \"\"\n  };\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1104, 16],
+      "id": "e9d5d29e-0724-41df-986f-a087f1cccd23",
+      "name": "PARSE - Validate LLM JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Trae el CV Master desde el primer Code node (extractor)\nconst fullCV = $node[\"PARSE - Extract CV Sections\"].json.full_cv;\n\n// Las 4 piezas nuevas vienen del item actual\nconst newTitle = ($json.new_title || \"\").trim();\nconst newSummary = ($json.new_summary || \"\").trim();\nconst newSkills = ($json.new_skills || \"\").trim();\nconst newInterests = ($json.new_interests || \"\").trim();\n\nlet updated = fullCV;\n\n// 1) Replace Title (2nd line)\nupdated = updated.replace(\n  /^([^\\r\\n]*\\r?\\n)([^\\r\\n]*)/m,\n  (m, l1, l2) => `${l1}${newTitle || l2}`\n);\n\n// 2) Replace Summary block\nupdated = updated.replace(\n  /PROFESSIONAL SUMMARY\\s*\\r?\\n([\\s\\S]*?)\\r?\\n\\s*PROFESSIONAL EXPERIENCE/,\n  `PROFESSIONAL SUMMARY\\n${newSummary}\\n\\nPROFESSIONAL EXPERIENCE`\n);\n\n// 3) Replace Skills block\nupdated = updated.replace(\n  /TECHNICAL\\s*&\\s*BUSINESS\\s*SKILLS\\s*\\r?\\n([\\s\\S]*?)\\r?\\n\\s*EDUCATION/,\n  `TECHNICAL & BUSINESS SKILLS\\n${newSkills}\\n\\nEDUCATION`\n);\n\n// 4) Replace Interests block (to end)\nupdated = updated.replace(\n  /INTERESTS\\s*\\r?\\n([\\s\\S]*?)\\s*$/m,\n  `INTERESTS\\n${newInterests}\\n`\n);\n\nreturn { final_cv_text: updated };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1312, 16],
+      "id": "08e434fc-7e16-404a-bebf-39fea3f8efe8",
+      "name": "BUILD - Reconstruct Final CV"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====== INPUT ======\nconst text = $json.final_cv_text || $json.final_cv || $json.cv_text || '';\nif (!text || typeof text !== 'string') throw new Error('Missing CV text input');\n\n// ====== HELPERS ======\nconst escapeHtml = (s) =>\n  String(s)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n\nconst lines = text.split('\\n').map(l => l.trimEnd());\n\n// Secciones esperadas (en mayúsculas)\nconst SECTION_TITLES = new Set([\n  'PROFESSIONAL SUMMARY',\n  'PROFESSIONAL EXPERIENCE',\n  'TECHNICAL & BUSINESS SKILLS',\n  'EDUCATION',\n  'CERTIFICATIONS & PROFESSIONAL DEVELOPMENT',\n  'LANGUAGES',\n  'INTERESTS',\n]);\n\n// ====== PARSE HEADER (3 primeras líneas) ======\nlet i = 0;\nconst header = { name: '', title: '', meta: '' };\nconst blocks = [];\n\nconst takeNonEmpty = () => {\n  while (i < lines.length && !lines[i].trim()) i++;\n  return i < lines.length ? lines[i].trim() : '';\n};\n\nheader.name = takeNonEmpty(); i++;\nheader.title = takeNonEmpty(); i++;\nheader.meta = takeNonEmpty(); i++;\n\n// ====== PARSE SECTIONS ======\nlet current = null;\n\nfor (; i < lines.length; i++) {\n  const line = (lines[i] || '').trim();\n  if (!line) continue;\n\n  if (SECTION_TITLES.has(line)) {\n    if (current) blocks.push(current);\n    current = { title: line, items: [] };\n    continue;\n  }\n\n  if (!current) continue;\n  current.items.push(line);\n}\nif (current) blocks.push(current);\n\n// ====== RENDER ======\nconst renderSection = (sec) => {\n  // PROFESSIONAL EXPERIENCE: roles + bullets\n  if (sec.title === 'PROFESSIONAL EXPERIENCE') {\n    let out = `<section class=\"section\"><h2>${sec.title}</h2>`;\n    let roleOpen = false;\n\n    for (const line of sec.items) {\n      const isRoleLine = / – /g.test(line) && / \\| /g.test(line);\n      const isBullet = line.startsWith('•') || line.startsWith('-');\n\n      if (isRoleLine) {\n        if (roleOpen) out += `</ul></div>`;\n        roleOpen = true;\n        out += `<div class=\"role\">\n          <div class=\"role-line\">${escapeHtml(line)}</div>\n          <ul class=\"bullets\">`;\n        continue;\n      }\n\n      if (!roleOpen) {\n        out += `<p class=\"para\">${escapeHtml(line)}</p>`;\n        continue;\n      }\n\n      const cleaned = isBullet\n        ? line.replace(/^•\\s?/, '').replace(/^-+\\s?/, '')\n        : line;\n\n      out += `<li>${escapeHtml(cleaned)}</li>`;\n    }\n\n    if (roleOpen) out += `</ul></div>`;\n    out += `</section>`;\n    return out;\n  }\n\n  // TECHNICAL & BUSINESS SKILLS: key/value\n  if (sec.title === 'TECHNICAL & BUSINESS SKILLS') {\n    const rows = sec.items\n      .map(l => l.replace(/^•\\s?/, ''))\n      .map(l => {\n        const m = l.match(/^([^:]+):\\s*(.+)$/);\n        if (!m) return null;\n        return { k: m[1].trim(), v: m[2].trim() };\n      })\n      .filter(Boolean);\n\n    let out = `<section class=\"section\"><h2>${sec.title}</h2>`;\n    if (rows.length) {\n      out += `<div class=\"kv\">` + rows.map(r =>\n        `<div class=\"kv-row\"><span class=\"kv-k\">${escapeHtml(r.k)}:</span> <span class=\"kv-v\">${escapeHtml(r.v)}</span></div>`\n      ).join('') + `</div>`;\n    } else {\n      out += sec.items.map(l => `<p class=\"para\">${escapeHtml(l)}</p>`).join('');\n    }\n    out += `</section>`;\n    return out;\n  }\n\n  // CERTIFICATIONS: subtítulos SIN bullet, items CON bullet\n  if (sec.title === 'CERTIFICATIONS & PROFESSIONAL DEVELOPMENT') {\n    let out = `<section class=\"section\"><h2>${sec.title}</h2><div class=\"cert\">`;\n\n    let currentLabel = null;\n    let items = [];\n\n    const flush = () => {\n      if (!currentLabel) return;\n      out += `<div class=\"cert-label\">${escapeHtml(currentLabel)}</div>`;\n      out += `<ul class=\"bullets\">` + items.map(x => `<li>${escapeHtml(x)}</li>`).join('') + `</ul>`;\n      items = [];\n    };\n\n    for (const line of sec.items) {\n      const cleaned = line.replace(/^•\\s?/, '').trim();\n\n      if (cleaned === 'Professional Certifications:' || cleaned === 'Relevant Courses & Training:') {\n        flush();\n        currentLabel = cleaned;\n        continue;\n      }\n\n      // Solo los items van con bullet\n      if (!currentLabel) {\n        // Si por lo que sea no vino el label, crea uno genérico\n        currentLabel = 'Professional Certifications:';\n      }\n      items.push(cleaned);\n    }\n    flush();\n\n    out += `</div></section>`;\n    return out;\n  }\n\n  // Genérico: bullets si detecta bullets\n  const hasBullets = sec.items.some(l => l.startsWith('•') || l.startsWith('-'));\n  let out = `<section class=\"section\"><h2>${sec.title}</h2>`;\n\n  if (hasBullets) {\n    out += `<ul class=\"bullets\">` + sec.items.map(l => {\n      const cleaned = l.replace(/^•\\s?/, '').replace(/^-+\\s?/, '');\n      return `<li>${escapeHtml(cleaned)}</li>`;\n    }).join('') + `</ul>`;\n  } else {\n    out += sec.items.map(l => `<p class=\"para\">${escapeHtml(l)}</p>`).join('');\n  }\n\n  out += `</section>`;\n  return out;\n};\n\nconst bodyHtml = blocks.map(renderSection).join('\\n');\n\n// ====== HTML + CSS (AJUSTES: 1 página, header centrado, resto justificado) ======\nconst html = `<!doctype html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<style>\n  @page { size: A4; margin: 9mm; }\n\n  body {\n    margin: 0;\n    font-family: Arial, Helvetica, sans-serif;\n    font-size: 9.6pt;\n    line-height: 1.22;\n    color: #111;\n  }\n\n  .page {\n    padding: 9mm;\n  }\n\n  /* Header centrado */\n  .header { text-align: center; margin-bottom: 8px; }\n  .name {\n    font-size: 15.5pt;\n    font-weight: 700;\n    margin: 0 0 2px 0;\n    letter-spacing: .2px;\n  }\n  .title {\n    font-size: 11pt;\n    font-weight: 600;\n    margin: 0 0 3px 0;\n  }\n  .meta {\n    font-size: 9.3pt;\n    color: #333;\n    margin: 0;\n  }\n\n  /* Secciones */\n  .section { margin-top: 8px; }\n  h2 {\n    font-size: 10pt;\n    margin: 0 0 5px 0;\n    padding-bottom: 2px;\n    border-bottom: 1px solid #ddd;\n    letter-spacing: .2px;\n  }\n\n  /* Justificar todo el contenido (excepto header) */\n  .section, .para, .role-line, .kv-row, .cert, .bullets li {\n    text-align: justify;\n  }\n\n  .para { margin: 0 0 5px 0; }\n\n  /* Roles */\n  .role { margin-bottom: 6px; }\n  .role-line { font-weight: 600; margin: 0 0 3px 0; }\n\n  /* Bullets */\n  .bullets { margin: 0; padding-left: 14px; }\n  .bullets li { margin: 0 0 3px 0; }\n\n  /* Skills key/value */\n  .kv-row { margin: 0 0 3px 0; }\n  .kv-k { font-weight: 600; }\n\n  /* Certifications: label sin bullet */\n  .cert-label { font-weight: 600; margin: 0 0 3px 0; }\n</style>\n</head>\n<body>\n  <div class=\"page\">\n    <header class=\"header\">\n      <p class=\"name\">${escapeHtml(header.name)}</p>\n      <p class=\"title\">${escapeHtml(header.title)}</p>\n      <p class=\"meta\">${escapeHtml(header.meta)}</p>\n    </header>\n\n    ${bodyHtml}\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { ...$json, cv_html: html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 16],
+      "id": "c6ef42ee-2d97-4fcf-8607-cc26cc704d47",
+      "name": "FORMAT - Wrap CV to Print HTML (Code)"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "cv_html",
+        "binaryPropertyName": "index.html",
+        "options": {
+          "fileName": "index.html"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1728, 16],
+      "id": "0c5dd31d-dd32-43b1-a29f-398c8c9024e3",
+      "name": "BINARY - HTML to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3000/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "index.html"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1936, 16],
+      "id": "470527c1-0c63-402d-889c-924b6d1f0a02",
+      "name": "PDF - Render HTML to PDF"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\nif (!item.binary) throw new Error('No binary in item');\nconst key = Object.keys(item.binary)[0]; // normalmente \"data\"\nif (!key) throw new Error('No binary key found');\n\nitem.binary[key].fileName = 'cv_tailored.pdf';\nitem.binary[key].mimeType = 'application/pdf';\n\nreturn [item];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2112, 16],
+      "id": "19f1ce74-73a6-4d63-afa7-03f9ff182050",
+      "name": "Final PDF"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "TRIGGER - New Application (Notion)": {
+      "main": [
+        [
+          {
+            "node": "NOTION - Fetch CV Master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NOTION - Fetch CV Master": {
+      "main": [
+        [
+          {
+            "node": "PARSE - Extract CV Sections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PARSE - Extract CV Sections": {
+      "main": [
+        [
+          {
+            "node": "PROMPT - Build ATS Instruction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROMPT - Build ATS Instruction": {
+      "main": [
+        [
+          {
+            "node": "LLM - CV Optimization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM - CV Optimization Chain": {
+      "main": [
+        [
+          {
+            "node": "PARSE - Validate LLM JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Model - Ollama Gemma3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM - CV Optimization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PARSE - Validate LLM JSON": {
+      "main": [
+        [
+          {
+            "node": "BUILD - Reconstruct Final CV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BUILD - Reconstruct Final CV": {
+      "main": [
+        [
+          {
+            "node": "FORMAT - Wrap CV to Print HTML (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FORMAT - Wrap CV to Print HTML (Code)": {
+      "main": [
+        [
+          {
+            "node": "BINARY - HTML to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BINARY - HTML to File": {
+      "main": [
+        [
+          {
+            "node": "PDF - Render HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF - Render HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "Final PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c58cdd36-54f7-4749-a324-f0f303292b16",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REDACTED"
+  },
+  "id": "0cU04do8wj2USsB6FHFDr",
+  "tags": []
+}

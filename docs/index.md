@@ -1,27 +1,64 @@
-# Auto CV Tailoring (Local-first n8n + Notion → PDF)
-
-This project automates CV tailoring from a Job Description written in Notion and generates a clean PDF CV.  
-Everything runs locally using Docker containers, including a locally hosted LLM model.
+# 🚀 Auto CV Tailoring Pipeline  
+### Local-First AI Automation (n8n + Notion → PDF)
 
 ---
 
-## What you get
-- Write/paste the Job Description in Notion
-- n8n orchestrates the pipeline locally
-- A local LLM adapts only selected CV sections
-- The final result is rendered from HTML to a print-ready PDF
+## 🎬 Live Demo
+
+<video src="demo.mp4" controls width="900"></video>
 
 ---
 
-## Architecture (high level)
-Notion → n8n (Docker) → Local LLM → JSON validation → HTML template → PDF
+## 🧠 What This Project Does
+
+This system automates CV tailoring from a Job Description written in Notion and generates a clean, print-ready PDF.
+
+Everything runs locally using Docker containers — including the LLM model.
 
 ---
 
-## Why local
-Running the full pipeline locally keeps CV data private, removes API costs, and makes the system reproducible.
+## ⚙️ How It Works
+
+Job Description (Notion)
+↓
+n8n Workflow (Docker)
+↓
+Local LLM (Ollama - Gemma)
+↓
+Structured JSON Validation
+↓
+Stable HTML Template Rendering
+↓
+PDF Generation
+↓
+Tailored CV Output
+
+
+Each layer is intentionally separated to ensure control, reliability, and predictable output.
 
 ---
 
-## Repo
-Go back to the repository to see the exported workflow and design notes.
+## 🏗 Architecture Overview
+
+The entire system runs locally:
+
+- 🐳 n8n orchestrates the workflow
+- 🤖 A locally hosted LLM processes content
+- 🧾 Output is validated before rendering
+- 🖨 HTML is converted into a structured PDF
+- 🔒 No data leaves the machine
+ 
+
+---
+
+## 🎯 Why This Matters
+
+Tailoring CVs manually is repetitive and inconsistent. 
+
+It demonstrates applied AI orchestration — not just prompt engineering.
+
+---
+
+## 📂 Repository
+
+You can explore the full workflow and design notes in the main repository.

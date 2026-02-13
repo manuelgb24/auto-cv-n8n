@@ -15,7 +15,7 @@ Everything runs locally using Docker containers, including the language model. T
 
 ## Why This Exists
 
-Manually tailoring a CV is not hard — it’s just inefficient. It consumes time, introduces inconsistencies, and makes it easy to over-edit sections that should remain stable.
+Manually tailoring a CV is not hard, it’s just inefficient. It consumes time, introduces inconsistencies, and makes it easy to over-edit sections that should remain stable.
 
 What I wanted was not just automation, but controlled automation.
 

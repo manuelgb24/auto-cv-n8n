@@ -13,7 +13,7 @@
 
 This system automates CV tailoring from a Job Description written in Notion and generates a clean, print-ready PDF.
 
-Everything runs locally using Docker containers — including the LLM model.
+Everything runs locally using Docker containers, including the LLM model.
 
 ---
 
@@ -55,7 +55,7 @@ The entire system runs locally:
 
 Tailoring CVs manually is repetitive and inconsistent. 
 
-It demonstrates applied AI orchestration — not just prompt engineering.
+It demonstrates applied AI orchestration, not just prompt engineering.
 
 ---
 
